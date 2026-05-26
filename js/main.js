@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameInstance = null;
     let chosenPlaneIndex = 0;
     let pendingHighScore = 0;
+    let selectedMissionId = 1;
+    let radarSweepAnimFrameId = null;
     
     // Blueprint Hangar & Technical Briefing variables
     const blueprintCanvas = document.getElementById('blueprint-canvas');
@@ -25,9 +27,19 @@ document.addEventListener('DOMContentLoaded', () => {
         "La 2° Escuadrilla Aeronaval de Caza y Ataque realizó el lanzamiento histórico del misil Exocet AM39 el 4 de mayo de 1982, impactando y hundiendo al destructor HMS Sheffield. Su sigilo volando al ras del mar y precisión tecnológica de vanguardia revolucionaron la guerra aeronaval para siempre.",
         "Aeronave de ataque y apoyo táctico de diseño y fabricación nacional. Con base en Puerto Argentino, Pradera del Ganso y Puerto Calderón, el IA-58 Pucará operó en pistas improvisadas de turba bajo fuego constante, demostrando una altísima rusticidad, poder de fuego y heroismo de sus tripulaciones en combate."
     ];
+
+    const missionsList = [
+        { id: 1, name: "MISIÓN 1: OPERACIÓN ROSARIO", date: "02 de Abril", desc: "Establece superioridad aérea sobre Puerto Argentino. Asegura el espacio aéreo neutralizando patrullas británicas de reconocimiento en aguas abiertas.", objective: "Destruir Harriers de patrulla", targetX: 180, targetY: 90 },
+        { id: 2, name: "MISIÓN 2: BAUTISMO DE FUEGO", date: "01 de Mayo", desc: "Intercepta las incursiones aéreas británicas que intentan bombardear los aeródromos argentinos en las islas. Prepárate para el asalto de helicópteros pesados.", objective: "Neutralizar Sea Kings y Harriers", targetX: 178, targetY: 92 },
+        { id: 3, name: "MISIÓN 3: ATAQUE AL HMS SHEFFIELD", date: "04 de Mayo", desc: "Vuela bajo en sigilo absoluto para evadir los radares enemigos. Localiza al destructor HMS Sheffield y realiza el histórico disparo de un misil AM39 Exocet.", objective: "Hundir Destructor HMS Sheffield", targetX: 220, targetY: 140 },
+        { id: 4, name: "MISIÓN 4: CALLEJÓN DE LAS BOMBAS", date: "21-25 de Mayo", desc: "Realiza una incursión de ataque a baja altura cruzando el estrecho paso de San Carlos. Esquiva la artillería británica y da cobertura aérea táctica.", objective: "Atacar fragatas y evadir fuego", targetX: 120, targetY: 90 },
+        { id: 5, name: "MISIÓN 5: BAHÍA AGRADABLE", date: "08 de Junio", desc: "Ataca a los buques logísticos de desembarco enemigos RFA Sir Galahad y Sir Tristram en Pleasant Cove bajo condiciones extremas de tempestad y lluvia.", objective: "Hundir Buque RFA Sir Galahad", targetX: 160, targetY: 115 },
+        { id: 6, name: "MISIÓN 6: EL HMS INVINCIBLE", date: "30 de Mayo", desc: "Misión final de máxima alerta. Penetra el perímetro de defensa naval británico y realiza un asalto definitivo contra su portaaviones insignia HMS Invincible.", objective: "Hundir Portaaviones HMS Invincible", targetX: 240, targetY: 80 }
+    ];
     
     // 2. Select DOM Elements
     const screenMenu = document.getElementById('screen-menu');
+    const screenMissions = document.getElementById('screen-missions');
     const screenSelection = document.getElementById('screen-selection');
     const screenGame = document.getElementById('screen-game');
     const screenGameOver = document.getElementById('screen-gameover');
@@ -37,6 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Buttons
     const btnStartMission = document.getElementById('btn-start-mission');
+    const btnBackMissions = document.getElementById('btn-back-missions');
+    const btnContinuePlane = document.getElementById('btn-continue-plane');
     const btnBackToMenu = document.getElementById('btn-back-menu');
     const btnLaunch = document.getElementById('btn-launch');
     const btnMute = document.getElementById('btn-mute');
@@ -48,6 +62,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const highScoresModal = document.getElementById('high-scores-modal');
     const scoresTableBody = document.getElementById('scores-table-body');
     const planeCards = document.querySelectorAll('.plane-card');
+    
+    // Campaign Mission DOM selections
+    const missionsGridContainer = document.getElementById('missions-grid-container');
+    const missionBriefingTitle = document.getElementById('mission-briefing-title');
+    const missionBriefDateVal = document.getElementById('mission-brief-date-val');
+    const missionBriefObjectiveVal = document.getElementById('mission-brief-objective-val');
+    const missionBriefDescVal = document.getElementById('mission-brief-desc-val');
+    const radarTargetIndicator = document.getElementById('radar-target-indicator');
     
     // Forms
     const formGameOver = document.getElementById('form-gameover-record');
@@ -76,6 +98,97 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initial render
     renderLeaderboard();
+    
+    // 3a. Campaign Mission Selection & Radar Animations
+    let radarSweepAngle = 0;
+    function animateRadarSweep() {
+        const sweepLine = document.getElementById('radar-sweep-line');
+        if (sweepLine) {
+            radarSweepAngle += 0.035;
+            const len = 90;
+            const x2 = 150 + Math.cos(radarSweepAngle) * len;
+            const y2 = 100 + Math.sin(radarSweepAngle) * len;
+            sweepLine.setAttribute('x2', x2);
+            sweepLine.setAttribute('y2', y2);
+        }
+        radarSweepAnimFrameId = requestAnimationFrame(animateRadarSweep);
+    }
+
+    function typeBriefingMission(text) {
+        if (!missionBriefDescVal) return;
+        if (typewriterTimeout) {
+            clearTimeout(typewriterTimeout);
+        }
+        missionBriefDescVal.innerHTML = '';
+        let i = 0;
+        function type() {
+            if (i < text.length) {
+                missionBriefDescVal.innerHTML += text.charAt(i);
+                i++;
+                typewriterTimeout = setTimeout(type, 12);
+            }
+        }
+        type();
+    }
+
+    function showMissionBriefing(m) {
+        if (!missionBriefingTitle) return;
+        missionBriefingTitle.innerText = "MISIÓN: " + m.name.split(":")[1].trim();
+        missionBriefDateVal.innerText = m.date.toUpperCase() + " DE 1982";
+        missionBriefObjectiveVal.innerText = m.objective.toUpperCase();
+        typeBriefingMission(m.desc);
+        
+        // Move flashing radar SVG target dot to selected coordinates
+        if (radarTargetIndicator) {
+            radarTargetIndicator.setAttribute('cx', m.targetX);
+            radarTargetIndicator.setAttribute('cy', m.targetY);
+            radarTargetIndicator.style.display = 'block';
+        }
+    }
+
+    function renderMissionsList() {
+        if (!missionsGridContainer) return;
+        
+        const unlockedMission = parseInt(localStorage.getItem('malvinas1982_unlocked_mission')) || 1;
+        missionsGridContainer.innerHTML = '';
+        
+        missionsList.forEach((m) => {
+            const card = document.createElement('div');
+            card.className = 'plane-card';
+            card.dataset.id = m.id;
+            
+            if (m.id > unlockedMission) {
+                card.classList.add('locked-node');
+            } else if (m.id === selectedMissionId) {
+                card.classList.add('selected');
+            }
+            
+            card.innerHTML = `
+                <div class="plane-info">
+                     <h4 class="plane-name" style="font-size: 11px; letter-spacing: 0.5px;">${m.name}</h4>
+                     <p class="plane-role" style="font-size: 8px; margin: 2px 0 0 0;">${m.date.toUpperCase()} DE 1982</p>
+                </div>
+                <div class="plane-stats" style="margin: 0; width: auto; font-size: 8px; color: var(--amber-tactical); opacity: 0.9; text-shadow: none;">
+                     OBJETIVO: ${m.objective.toUpperCase()}
+                </div>
+            `;
+            
+            if (m.id <= unlockedMission) {
+                card.addEventListener('click', () => {
+                    playClickSound();
+                    document.querySelectorAll('#missions-grid-container .plane-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedMissionId = m.id;
+                    showMissionBriefing(m);
+                });
+            }
+            
+            missionsGridContainer.appendChild(card);
+        });
+        
+        const activeMission = missionsList.find(m => m.id === selectedMissionId) || missionsList[0];
+        showMissionBriefing(activeMission);
+    }
     
     // 3b. Render Aircraft Previews inside selection cards
     function drawPlanePreviews() {
@@ -395,13 +508,17 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelAnimationFrame(blueprintAnimationFrameId);
             blueprintAnimationFrameId = null;
         }
+        if (radarSweepAnimFrameId) {
+            cancelAnimationFrame(radarSweepAnimFrameId);
+            radarSweepAnimFrameId = null;
+        }
         if (typewriterTimeout) {
             clearTimeout(typewriterTimeout);
         }
 
         // Hide all screens
-        [screenMenu, screenSelection, screenGame, screenGameOver, screenVictory].forEach(s => {
-            s.classList.add('hidden');
+        [screenMenu, screenMissions, screenSelection, screenGame, screenGameOver, screenVictory].forEach(s => {
+            if (s) s.classList.add('hidden');
         });
         // Show target screen
         screen.classList.remove('hidden');
@@ -411,6 +528,20 @@ document.addEventListener('DOMContentLoaded', () => {
             blueprintTick = 0;
             animateBlueprint();
             typeBriefing(historicalBriefings[chosenPlaneIndex]);
+            
+            // Update active mission banner in Hangar
+            const activeMission = missionsList.find(m => m.id === selectedMissionId) || missionsList[0];
+            const hangarActiveMission = document.getElementById('hangar-active-mission');
+            if (hangarActiveMission) {
+                hangarActiveMission.innerText = activeMission.name;
+            }
+        }
+        
+        // Start SVG Radar sweep if inside Missions Select
+        if (screen === screenMissions) {
+            renderMissionsList();
+            radarSweepAngle = 0;
+            animateRadarSweep();
         }
     }
 
@@ -422,15 +553,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Go to Plane Selection Screen
+    // Go to Missions Selection Screen
     btnStartMission.addEventListener('click', () => {
+        playClickSound();
+        showScreen(screenMissions);
+    });
+
+    btnBackMissions.addEventListener('click', () => {
+        playClickSound();
+        showScreen(screenMenu);
+    });
+
+    btnContinuePlane.addEventListener('click', () => {
         playClickSound();
         showScreen(screenSelection);
     });
 
     btnBackToMenu.addEventListener('click', () => {
         playClickSound();
-        showScreen(screenMenu);
+        showScreen(screenMissions); // Back goes to mission planning selection list
     });
 
     // Handle Plane selection card highlight
@@ -491,7 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedDifficulty = selectedDiffInput ? selectedDiffInput.value : 'normal';
         
         gameInstance.resize();
-        gameInstance.start(chosenPlaneIndex, selectedDifficulty);
+        gameInstance.start(chosenPlaneIndex, selectedDifficulty, selectedMissionId);
     });
 
     // 7. Game State Callbacks

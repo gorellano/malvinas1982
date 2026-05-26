@@ -84,13 +84,84 @@ class MalvinasGame {
         this.spawnTimer = 0;
         this.spawnInterval = 1200; // ms
         this.distanceCovered = 0;
-        this.distanceLimit = 10000; // Boss spawns here
+        this.distanceLimit = 3000; // Overwritten by mission
         this.bossSpawned = false;
         
         // Pucará overdrive active state
         this.overdriveTimer = 0;
 
-        // Stage Titles
+        // Historical Missions Configuration
+        this.missions = [
+            {
+                id: 1,
+                name: "MISIÓN 1: OPERACIÓN ROSARIO",
+                date: "02 de Abril de 1982",
+                desc: "Establece superioridad aérea sobre Puerto Argentino. Neutraliza patrullas aéreas del enemigo.",
+                distanceLimit: 3000,
+                weather: "clear",
+                cliffs: false,
+                bossType: "none",
+                wingmanAllowed: false
+            },
+            {
+                id: 2,
+                name: "MISIÓN 2: BAUTISMO DE FUEGO",
+                date: "01 de Mayo de 1982",
+                desc: "Defiende los aeródromos interceptando incursiones de Sea Kings y Harriers pesados.",
+                distanceLimit: 4000,
+                weather: "overcast",
+                cliffs: false,
+                bossType: "heavy_squad",
+                wingmanAllowed: false
+            },
+            {
+                id: 3,
+                name: "MISIÓN 3: ATAQUE AL HMS SHEFFIELD",
+                date: "04 de Mayo de 1982",
+                desc: "Incursión naval volando al ras del agua. Localiza y destruye al destructor HMS Sheffield.",
+                distanceLimit: 4500,
+                weather: "foggy",
+                cliffs: false,
+                bossType: "sheffield",
+                wingmanAllowed: false
+            },
+            {
+                id: 4,
+                name: "MISIÓN 4: CALLEJÓN DE LAS BOMBAS",
+                date: "21-25 de Mayo de 1982",
+                desc: "Esquiva artillería y ataca fragatas volando a baja altura en el Estrecho de San Carlos.",
+                distanceLimit: 5000,
+                weather: "clear",
+                cliffs: true,
+                bossType: "sheffield_escorted",
+                wingmanAllowed: true
+            },
+            {
+                id: 5,
+                name: "MISIÓN 5: BAHÍA AGRADABLE",
+                date: "08 de Junio de 1982",
+                desc: "Ataca buques de desembarco enemigos bajo una tempestad feroz en Pleasant Cove.",
+                distanceLimit: 5500,
+                weather: "storm",
+                cliffs: true,
+                bossType: "sir_galahad",
+                wingmanAllowed: true
+            },
+            {
+                id: 6,
+                name: "MISIÓN 6: PORTAAVIONES HMS INVINCIBLE",
+                date: "30 de Mayo de 1982",
+                desc: "Asalto final de máxima dificultad. Hunde al portaaviones insignia británico.",
+                distanceLimit: 7000,
+                weather: "storm",
+                cliffs: false,
+                bossType: "invincible",
+                wingmanAllowed: true
+            }
+        ];
+        this.currentMissionId = 1;
+
+        // Stage Titles (For classic display)
         this.stageTitles = {
             1: "ETAPA 1: OPERACIÓN ROSARIO - PATRULLA EN EL MAR",
             2: "ETAPA 2: ESTRECHO DE SAN CARLOS - INCURSIÓN NAVAL",
@@ -201,10 +272,14 @@ class MalvinasGame {
         }
     }
 
-    start(planeIndex, difficulty = 'normal') {
+    start(planeIndex, difficulty = 'normal', missionId = 1) {
         this.selectedPlaneIndex = planeIndex;
         this.difficulty = difficulty;
+        this.currentMissionId = parseInt(missionId) || 1;
         const config = this.planesConfig[planeIndex];
+        
+        // Grab current mission details
+        const mission = this.missions.find(m => m.id === this.currentMissionId) || this.missions[0];
         
         // Define difficulty multipliers
         this.diffMult = {
@@ -231,12 +306,16 @@ class MalvinasGame {
         
         this.score = 0;
         this.distanceCovered = 0;
+        this.distanceLimit = mission.distanceLimit;
         this.bossSpawned = false;
         this.gameOverTriggered = false;
         this.victoryTriggered = false;
         
-        // Stage Progression variables
+        // Stage Progression variables (statically assigned by mission)
         this.currentStage = 1;
+        if (mission.cliffs) this.currentStage = 2;
+        if (mission.weather === 'storm') this.currentStage = 3;
+        
         this.stageTransitionTimer = 0;
         this.wingmanActive = false;
         this.wingmanSpawnedThisRun = false;
@@ -256,6 +335,8 @@ class MalvinasGame {
             specialCharge: 0, // 0 to 100
             shootCooldown: 0,
             weaponUpgrade: 1, // 1: Single, 2: Dual
+            activeWeapon: 'standard', // 'standard', 'dual', 'spread', 'side', 'rear'
+            weaponTimer: 0, // milliseconds remaining
             size: 32,
             invulnerable: 90, // frames at start
             shield: 0, // 1 when active, 0 when off
@@ -322,27 +403,17 @@ class MalvinasGame {
             return;
         }
 
-        // Boundary checks for stage transitions based on distanceCovered
-        if (this.distanceCovered >= 3300 && this.currentStage === 1) {
-            this.currentStage = 2;
-            this.stageTransitionTimer = 180; // 3 seconds freeze
-            this.enemies = []; // clear current screen
-            this.enemyBullets = [];
-            if (window.audioEngine) window.audioEngine.playSpecialReady();
-            return;
-        }
-        if (this.distanceCovered >= 6600 && this.currentStage === 2) {
-            this.currentStage = 3;
-            this.stageTransitionTimer = 180; // 3 seconds freeze
-            this.enemies = [];
-            this.enemyBullets = [];
-            if (window.audioEngine) window.audioEngine.playSpecialReady();
-            return;
-        }
-
         // Decrease player invulnerability
         if (this.player.invulnerable > 0) {
             this.player.invulnerable--;
+        }
+        
+        // Update active weapon timer
+        if (this.player.weaponTimer > 0) {
+            this.player.weaponTimer -= dt * 1000;
+            if (this.player.weaponTimer <= 0) {
+                this.player.activeWeapon = 'standard';
+            }
         }
         
         // Update overdrive time
@@ -467,17 +538,17 @@ class MalvinasGame {
                 }
             }
             
-            // Add distance
+            // Add distance (25 units per second for classic 1942 level duration)
             if (!this.bossSpawned) {
-                this.distanceCovered += dt * 350;
+                this.distanceCovered += dt * 25;
                 if (this.distanceCovered >= this.distanceLimit) {
                     this.spawnFinalBoss();
                 }
             }
         }
 
-        // 4. Allied Wingman support mechanics
-        if (this.currentStage === 2 && this.distanceCovered >= 5000 && !this.wingmanSpawnedThisRun) {
+        // 4. Allied Wingman support mechanics (Spawn at 70% of level distance)
+        if (this.currentStage === 2 && this.distanceCovered >= this.distanceLimit * 0.7 && !this.wingmanSpawnedThisRun) {
             this.wingmanActive = true;
             this.wingmanSpawnedThisRun = true;
             this.wingman = {
@@ -862,42 +933,110 @@ class MalvinasGame {
 
         // 3. Draw Ships (Miniboss / Destroyer class on water level under clouds)
         this.enemies.forEach(e => {
-            if (e.isMiniboss) this.drawDestroyer(this.ctx, e);
-            if (e.isBoss) this.drawCarrier(this.ctx, e);
+            if (e.isMiniboss || (e.isBoss && e.type === 'sheffield')) {
+                this.drawDestroyer(this.ctx, e);
+            }
+            if (e.isBoss && e.type === 'sir_galahad') {
+                this.drawLandingShip(this.ctx, e);
+            }
+            if (e.isBoss && e.type === 'invincible') {
+                this.drawCarrier(this.ctx, e);
+            }
         });
 
         // Draw Pickups
         this.pickups.forEach(p => {
             if (p.type === 'repair') {
+                this.ctx.save();
+                this.ctx.translate(p.x, p.y);
+                this.ctx.rotate(performance.now() / 250);
+                
+                // Glowing circular ring
+                this.ctx.strokeStyle = '#4fe688';
+                this.ctx.shadowColor = '#4fe688';
+                this.ctx.shadowBlur = 8;
+                this.ctx.lineWidth = 2.5;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, 11, 0, Math.PI * 2);
+                this.ctx.stroke();
+                
+                // Glowing medical cross
                 this.ctx.fillStyle = '#4fe688';
-            } else if (p.type === 'upgrade') {
-                this.ctx.fillStyle = '#e6be4f';
+                this.ctx.fillRect(-3, -8, 6, 16);
+                this.ctx.fillRect(-8, -3, 16, 6);
+                this.ctx.restore();
             } else if (p.type === 'shield') {
+                this.ctx.save();
+                this.ctx.translate(p.x, p.y);
+                
+                this.ctx.shadowColor = '#00f0ff';
+                this.ctx.shadowBlur = 10;
+                
+                // Central plasma core
                 this.ctx.fillStyle = '#00f0ff';
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, 6, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Orbiting gyroscopic rings
+                this.ctx.strokeStyle = '#00f0ff';
+                this.ctx.lineWidth = 1.5;
+                
+                this.ctx.save();
+                this.ctx.rotate(performance.now() / 150);
+                this.ctx.beginPath();
+                this.ctx.ellipse(0, 0, 12, 4, 0, 0, Math.PI * 2);
+                this.ctx.stroke();
+                this.ctx.restore();
+                
+                this.ctx.save();
+                this.ctx.rotate(-performance.now() / 200 + Math.PI / 4);
+                this.ctx.beginPath();
+                this.ctx.ellipse(0, 0, 12, 4, 0, 0, Math.PI * 2);
+                this.ctx.stroke();
+                this.ctx.restore();
+                
+                this.ctx.restore();
+            } else if (p.type.startsWith('weapon_') || p.type === 'upgrade') {
+                this.ctx.save();
+                this.ctx.translate(p.x, p.y);
+                this.ctx.rotate(performance.now() / 300);
+                
+                // Golden glowing tactical hexagon
+                this.ctx.strokeStyle = '#e6be4f';
+                this.ctx.shadowColor = '#e6be4f';
+                this.ctx.shadowBlur = 8;
+                this.ctx.lineWidth = 2;
+                
+                this.ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i * Math.PI) / 3;
+                    const hx = Math.cos(angle) * 12;
+                    const hy = Math.sin(angle) * 12;
+                    if (i === 0) this.ctx.moveTo(hx, hy);
+                    else this.ctx.lineTo(hx, hy);
+                }
+                this.ctx.closePath();
+                this.ctx.stroke();
+                this.ctx.restore();
+                
+                // Draw text symbol inside (static to remain readable)
+                this.ctx.save();
+                this.ctx.translate(p.x, p.y);
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = 'bold 9px "Share Tech Mono", monospace';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                
+                const wName = p.type.startsWith('weapon_') ? p.type.split('_')[1] : 'dual';
+                let sym = '2X';
+                if (wName === 'spread') sym = '3X';
+                if (wName === 'side') sym = '◀▶';
+                if (wName === 'rear') sym = '▲▼';
+                
+                this.ctx.fillText(sym, 0, 0);
+                this.ctx.restore();
             }
-            this.ctx.strokeStyle = '#fff';
-            this.ctx.lineWidth = 2;
-            
-            this.ctx.save();
-            this.ctx.translate(p.x, p.y);
-            this.ctx.rotate(performance.now() / 200);
-            
-            // Draw square badge
-            this.ctx.fillRect(-10, -10, 20, 20);
-            this.ctx.strokeRect(-10, -10, 20, 20);
-            
-            // Draw symbol inside
-            this.ctx.fillStyle = '#000';
-            this.ctx.font = 'bold 12px monospace';
-            this.ctx.textAlign = 'center';
-            this.ctx.textBaseline = 'middle';
-            
-            let sym = 'W';
-            if (p.type === 'repair') sym = '+';
-            if (p.type === 'shield') sym = 'S';
-            
-            this.ctx.fillText(sym, 0, 0);
-            this.ctx.restore();
         });
 
         // 4. Draw Player
@@ -1809,6 +1948,167 @@ class MalvinasGame {
         ctx.restore();
     }
 
+    drawLandingShip(ctx, e) {
+        ctx.save();
+        ctx.translate(e.x, e.y);
+        
+        if (e.flashTime > 0) {
+            ctx.filter = 'brightness(2.2)';
+        }
+
+        // 1. Water foam wake breaking around ship
+        ctx.fillStyle = 'rgba(230, 245, 255, 0.4)';
+        const waveOffset = Math.sin(performance.now() / 80) * 4;
+        ctx.beginPath();
+        ctx.ellipse(0, -e.height * 0.45, 30 + waveOffset, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.ellipse(-25, e.height * 0.35, 12, 35, Math.PI / 16, 0, Math.PI * 2);
+        ctx.ellipse(25, e.height * 0.35, 12, 35, -Math.PI / 16, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Main Hull outline (Auxiliary Landing Ship)
+        // Red underwater keel
+        ctx.fillStyle = '#9b3c3c';
+        ctx.beginPath();
+        ctx.moveTo(-e.width * 0.48, e.height * 0.3);
+        ctx.lineTo(-e.width * 0.44, -e.height * 0.4);
+        ctx.quadraticCurveTo(0, -e.height * 0.52, e.width * 0.44, -e.height * 0.4);
+        ctx.lineTo(e.width * 0.48, e.height * 0.3);
+        ctx.quadraticCurveTo(0, e.height * 0.46, -e.width * 0.48, e.height * 0.3);
+        ctx.fill();
+
+        // Main superstructure steel-gray hull
+        ctx.fillStyle = '#57626e';
+        ctx.beginPath();
+        ctx.moveTo(-e.width * 0.46, e.height * 0.28);
+        ctx.lineTo(-e.width * 0.42, -e.height * 0.38);
+        ctx.quadraticCurveTo(0, -e.height * 0.5, e.width * 0.42, -e.height * 0.38);
+        ctx.lineTo(e.width * 0.46, e.height * 0.28);
+        ctx.quadraticCurveTo(0, e.height * 0.44, -e.width * 0.46, e.height * 0.28);
+        ctx.fill();
+
+        // Shadow hull overlay for 3D feel
+        ctx.fillStyle = 'rgba(0,0,0,0.18)';
+        ctx.beginPath();
+        ctx.moveTo(0, -e.height * 0.5);
+        ctx.lineTo(e.width * 0.42, -e.height * 0.38);
+        ctx.lineTo(e.width * 0.46, e.height * 0.28);
+        ctx.quadraticCurveTo(0, e.height * 0.44, 0, e.height * 0.28);
+        ctx.closePath();
+        ctx.fill();
+
+        // 3. Wooden-Grey cargo deck
+        ctx.fillStyle = '#6e6a64';
+        ctx.beginPath();
+        ctx.moveTo(-e.width * 0.38, e.height * 0.25);
+        ctx.lineTo(-e.width * 0.34, -e.height * 0.34);
+        ctx.quadraticCurveTo(0, -e.height * 0.45, e.width * 0.34, -e.height * 0.34);
+        ctx.lineTo(e.width * 0.38, e.height * 0.25);
+        ctx.quadraticCurveTo(0, e.height * 0.38, -e.width * 0.38, e.height * 0.25);
+        ctx.fill();
+
+        // 4. Cargo Hatches and yellow guidelines
+        ctx.strokeStyle = '#cda136';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-18, -e.height * 0.22, 36, e.height * 0.4);
+
+        ctx.fillStyle = '#3a3f47'; // Cargo hatches
+        ctx.fillRect(-12, -e.height * 0.15, 24, 30);
+        ctx.fillRect(-12, e.height * 0.05, 24, 30);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.strokeRect(-12, -e.height * 0.15, 24, 30);
+        ctx.strokeRect(-12, e.height * 0.05, 24, 30);
+
+        // 5. Foredeck Crane
+        ctx.fillStyle = '#7a8793';
+        ctx.fillRect(-4, -e.height * 0.3, 8, 8);
+        ctx.strokeStyle = '#2b3238';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -e.height * 0.28);
+        ctx.lineTo(15, -e.height * 0.32);
+        ctx.stroke();
+
+        // 6. Aft Superstructure (Bridge & Cabins)
+        ctx.fillStyle = '#414952';
+        ctx.beginPath();
+        ctx.moveTo(-e.width * 0.38, e.height * 0.15);
+        ctx.lineTo(-e.width * 0.38, e.height * 0.32);
+        ctx.quadraticCurveTo(0, e.height * 0.42, e.width * 0.38, e.height * 0.32);
+        ctx.lineTo(e.width * 0.38, e.height * 0.15);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#7e8a96';
+        ctx.fillRect(-22, e.height * 0.18, 44, 18);
+        ctx.fillStyle = '#545f6b';
+        ctx.fillRect(-15, e.height * 0.23, 30, 10);
+
+        // Glass windows on bridge
+        ctx.fillStyle = '#00f0ff';
+        ctx.fillRect(-18, e.height * 0.19, 6, 4);
+        ctx.fillRect(-8, e.height * 0.19, 6, 4);
+        ctx.fillRect(2, e.height * 0.19, 6, 4);
+        ctx.fillRect(12, e.height * 0.19, 6, 4);
+
+        // Twin funnels on superstructure emitting smoke particles
+        ctx.fillStyle = '#222';
+        ctx.fillRect(-12, e.height * 0.28, 6, 12);
+        ctx.fillRect(6, e.height * 0.28, 6, 12);
+        
+        // Spawn black smoke
+        if (Math.random() < 0.25) {
+            this.particles.push({
+                x: e.x - 9,
+                y: e.y + e.height * 0.28,
+                vx: -20 + Math.random() * 10,
+                vy: 40 + Math.random() * 20,
+                r: 4 + Math.random() * 6,
+                life: 1.0,
+                maxLife: 1.0,
+                color: 'rgba(50, 50, 50, 0.4)'
+            });
+            this.particles.push({
+                x: e.x + 9,
+                y: e.y + e.height * 0.28,
+                vx: 20 - Math.random() * 10,
+                vy: 40 + Math.random() * 20,
+                r: 4 + Math.random() * 6,
+                life: 1.0,
+                maxLife: 1.0,
+                color: 'rgba(50, 50, 50, 0.4)'
+            });
+        }
+
+        // 7. Gun Turrets (Anti-aircraft bofors)
+        ctx.fillStyle = '#222';
+        ctx.save();
+        ctx.translate(-e.width * 0.32, -e.height * 0.05);
+        ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#222'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-12, -4); ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(e.width * 0.32, -e.height * 0.05);
+        ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#222'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(12, -4); ctx.stroke();
+        ctx.restore();
+
+        // 8. Health Bar overlay
+        const hpPercent = e.hp / e.maxHp;
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(-35, -e.height * 0.58, 70, 7);
+        ctx.fillStyle = '#ff4400';
+        ctx.fillRect(-34, -e.height * 0.57, 68 * hpPercent, 5);
+
+        ctx.restore();
+    }
+
     /**
      * Procedural Drawing: HMS Invincible Aircraft Carrier (Main Boss)
      * High-fidelity flagship deck with angled runway stripes, hazard ski-jump bow,
@@ -2134,24 +2434,27 @@ class MalvinasGame {
             window.audioEngine.playLaser();
         }
 
-        if (this.player.weaponUpgrade === 1) {
+        const weapon = this.player.activeWeapon || 'standard';
+        const damage = config.damage;
+
+        if (weapon === 'standard') {
             // Single bullet
             this.bullets.push({
                 x: this.player.x,
                 y: this.player.y - 18,
                 vx: 0,
                 vy: -600,
-                damage: config.damage,
+                damage: damage,
                 type: 'standard'
             });
-        } else {
+        } else if (weapon === 'dual') {
             // Dual bullets
             this.bullets.push({
                 x: this.player.x - 10,
                 y: this.player.y - 12,
                 vx: 0,
                 vy: -600,
-                damage: config.damage,
+                damage: damage,
                 type: 'standard'
             });
             this.bullets.push({
@@ -2159,7 +2462,82 @@ class MalvinasGame {
                 y: this.player.y - 12,
                 vx: 0,
                 vy: -600,
-                damage: config.damage,
+                damage: damage,
+                type: 'standard'
+            });
+        } else if (weapon === 'spread') {
+            // Spread: 3 bullets (Front and 15-degree diagonals)
+            this.bullets.push({
+                x: this.player.x,
+                y: this.player.y - 18,
+                vx: 0,
+                vy: -600,
+                damage: damage,
+                type: 'standard'
+            });
+            // -15 deg
+            this.bullets.push({
+                x: this.player.x - 8,
+                y: this.player.y - 14,
+                vx: -150,
+                vy: -580,
+                damage: damage * 0.9,
+                type: 'standard'
+            });
+            // +15 deg
+            this.bullets.push({
+                x: this.player.x + 8,
+                y: this.player.y - 14,
+                vx: 150,
+                vy: -580,
+                damage: damage * 0.9,
+                type: 'standard'
+            });
+        } else if (weapon === 'side') {
+            // Front + Left + Right
+            this.bullets.push({
+                x: this.player.x,
+                y: this.player.y - 18,
+                vx: 0,
+                vy: -600,
+                damage: damage,
+                type: 'standard'
+            });
+            // Horizontal Left
+            this.bullets.push({
+                x: this.player.x - 18,
+                y: this.player.y,
+                vx: -500,
+                vy: 0,
+                damage: damage * 0.8,
+                type: 'standard'
+            });
+            // Horizontal Right
+            this.bullets.push({
+                x: this.player.x + 18,
+                y: this.player.y,
+                vx: 500,
+                vy: 0,
+                damage: damage * 0.8,
+                type: 'standard'
+            });
+        } else if (weapon === 'rear') {
+            // Front + Rear
+            this.bullets.push({
+                x: this.player.x,
+                y: this.player.y - 18,
+                vx: 0,
+                vy: -600,
+                damage: damage,
+                type: 'standard'
+            });
+            // Straight Backwards
+            this.bullets.push({
+                x: this.player.x,
+                y: this.player.y + 18,
+                vx: 0,
+                vy: 600,
+                damage: damage,
                 type: 'standard'
             });
         }
@@ -2399,29 +2777,151 @@ class MalvinasGame {
     }
 
     spawnFinalBoss() {
+        const mission = this.missions.find(m => m.id === this.currentMissionId) || this.missions[0];
         this.bossSpawned = true;
         
         // Remove common enemies
         this.enemies = this.enemies.filter(e => e.isMiniboss);
         
-        // Spawn HMS Invincible
-        this.enemies.push({
-            type: 'invincible',
-            isBoss: true,
-            x: this.width / 2,
-            y: -150, // Enters from top
-            width: 140,
-            height: 230,
-            size: 110,
-            vx: 30, // slow sweep
-            hp: 2000,
-            maxHp: 2000,
-            shootTimer: 0,
-            shootInterval: 2800,
-            points: 15000,
-            specialReward: 0,
-            flashTime: 0
-        });
+        if (mission.bossType === 'none') {
+            this.bullets = [];
+            this.enemyBullets = [];
+            setTimeout(() => {
+                this.triggerVictory();
+            }, 1000);
+            return;
+        }
+
+        if (mission.bossType === 'heavy_squad') {
+            // Spawn 3 Heavy Sea Kings at top as boss squadron
+            for (let i = 0; i < 3; i++) {
+                this.enemies.push({
+                    type: 'seaking',
+                    isBoss: true,
+                    x: this.width / 4 * (i + 1),
+                    y: -100,
+                    size: 40,
+                    hp: 400,
+                    maxHp: 400,
+                    speed: 80,
+                    vx: 40 * (i - 1),
+                    age: 0,
+                    shootTimer: 0,
+                    shootInterval: 1400,
+                    points: 2000,
+                    specialReward: 0,
+                    flashTime: 0
+                });
+            }
+            return;
+        }
+
+        if (mission.bossType === 'sheffield') {
+            // Spawn Destroyer HMS Sheffield as main boss descending from top
+            this.enemies.push({
+                type: 'sheffield',
+                isBoss: true,
+                x: this.width / 2,
+                y: -150,
+                width: 75,
+                height: 140,
+                size: 60,
+                vx: 30,
+                hp: 1200,
+                maxHp: 1200,
+                shootTimer: 0,
+                shootInterval: 2000,
+                points: 5000,
+                specialReward: 0,
+                flashTime: 0
+            });
+            return;
+        }
+
+        if (mission.bossType === 'sheffield_escorted') {
+            // HMS Sheffield with 2 escort Harriers
+            this.enemies.push({
+                type: 'sheffield',
+                isBoss: true,
+                x: this.width / 2,
+                y: -150,
+                width: 75,
+                height: 140,
+                size: 60,
+                vx: 35,
+                hp: 1500,
+                maxHp: 1500,
+                shootTimer: 0,
+                shootInterval: 1800,
+                points: 7500,
+                specialReward: 0,
+                flashTime: 0
+            });
+            for (let i = 0; i < 2; i++) {
+                this.enemies.push({
+                    type: 'harrier',
+                    x: this.width / 3 * (i + 1),
+                    y: -50,
+                    startX: this.width / 3 * (i + 1),
+                    size: 24,
+                    hp: 80,
+                    maxHp: 80,
+                    speed: 150,
+                    pattern: 'sine',
+                    age: 0,
+                    shootTimer: 0,
+                    shootInterval: 1200,
+                    points: 300,
+                    specialReward: 0,
+                    flashTime: 0
+                });
+            }
+            return;
+        }
+
+        if (mission.bossType === 'sir_galahad') {
+            // Spawn Sir Galahad Landing Ship
+            this.enemies.push({
+                type: 'sir_galahad',
+                isBoss: true,
+                x: this.width / 2,
+                y: -180,
+                width: 110,
+                height: 200,
+                size: 90,
+                vx: 25,
+                hp: 1800,
+                maxHp: 1800,
+                shootTimer: 0,
+                shootInterval: 2400,
+                points: 10000,
+                specialReward: 0,
+                flashTime: 0
+            });
+            return;
+        }
+
+        if (mission.bossType === 'invincible') {
+            // Spawn HMS Invincible Carrier
+            this.enemies.push({
+                type: 'invincible',
+                isBoss: true,
+                x: this.width / 2,
+                y: -150,
+                width: 140,
+                height: 230,
+                size: 110,
+                vx: 30,
+                hp: 2500,
+                maxHp: 2500,
+                shootTimer: 0,
+                shootInterval: 2800,
+                points: 15000,
+                specialReward: 0,
+                flashTime: 0
+            });
+            return;
+        }
     }
 
     fireBossWeapons(boss) {
@@ -2550,11 +3050,26 @@ class MalvinasGame {
         this.pickups.forEach((p, idx) => {
             const dist = Math.hypot(p.x - this.player.x, p.y - this.player.y);
             if (dist < playerRadius + 12) {
+                let sparkColor = '#e6be4f';
+                
                 if (p.type === 'repair') {
                     this.player.hp = Math.min(this.player.maxHp, this.player.hp + 30);
+                    sparkColor = '#4fe688';
                     if (window.audioEngine) window.audioEngine.playSpecialReady();
-                } else if (p.type === 'upgrade') {
-                    this.player.weaponUpgrade = 2; // Dual guns upgrade
+                } else if (p.type === 'shield') {
+                    this.player.shield = 1;
+                    sparkColor = '#00f0ff';
+                    if (window.audioEngine) window.audioEngine.playSpecialReady();
+                } else if (p.type.startsWith('weapon_')) {
+                    const wType = p.type.split('_')[1];
+                    this.player.activeWeapon = wType;
+                    this.player.weaponTimer = 15000; // 15 seconds duration
+                    sparkColor = '#e6be4f';
+                    if (window.audioEngine) window.audioEngine.playCoin();
+                } else if (p.type === 'upgrade') { // fallback
+                    this.player.activeWeapon = 'dual';
+                    this.player.weaponTimer = 15000;
+                    sparkColor = '#e6be4f';
                     if (window.audioEngine) window.audioEngine.playCoin();
                 }
                 
@@ -2568,7 +3083,7 @@ class MalvinasGame {
                         r: 2 + Math.random() * 3,
                         life: 0.5,
                         maxLife: 0.5,
-                        color: p.type === 'repair' ? '#4fe688' : '#e6be4f'
+                        color: sparkColor
                     });
                 }
                 
@@ -2675,25 +3190,40 @@ class MalvinasGame {
             }
         }
 
-        // Trigger Victory if HMS Invincible is down
+        // Trigger Victory if all bosses are down
         if (e.isBoss) {
-            setTimeout(() => {
-                this.triggerVictory();
-            }, 1500);
+            const otherBosses = this.enemies.filter(other => other.isBoss && other !== e && other.hp > 0);
+            if (otherBosses.length === 0) {
+                setTimeout(() => {
+                    this.triggerVictory();
+                }, 1500);
+            }
         }
     }
 
     spawnPickupCheck(e) {
         let chance = 0.08;
-        if (e.isMiniboss) chance = 1.0; // Always spawns from destroyer
+        if (e.isMiniboss || e.isBoss) chance = 1.0; // Always spawns from large targets
         
         if (Math.random() < chance) {
             const r = Math.random();
             let type;
-            if (e.isMiniboss) {
-                type = r < 0.4 ? 'repair' : (r < 0.7 ? 'upgrade' : 'shield');
+            if (e.isMiniboss || e.isBoss) {
+                const roll = Math.random();
+                if (roll < 0.25) type = 'repair';
+                else if (roll < 0.45) type = 'shield';
+                else {
+                    const weapons = ['weapon_dual', 'weapon_spread', 'weapon_side', 'weapon_rear'];
+                    type = weapons[Math.floor(Math.random() * weapons.length)];
+                }
             } else {
-                type = r < 0.5 ? 'repair' : (r < 0.85 ? 'upgrade' : 'shield');
+                const roll = Math.random();
+                if (roll < 0.4) type = 'repair';
+                else if (roll < 0.55) type = 'shield';
+                else {
+                    const weapons = ['weapon_dual', 'weapon_spread', 'weapon_side', 'weapon_rear'];
+                    type = weapons[Math.floor(Math.random() * weapons.length)];
+                }
             }
             this.pickups.push({
                 x: e.x,
@@ -2743,6 +3273,17 @@ class MalvinasGame {
     triggerVictory() {
         if (this.victoryTriggered) return;
         this.victoryTriggered = true;
+        
+        // Save campaign progression
+        try {
+            const currentUnlocked = parseInt(localStorage.getItem('malvinas1982_unlocked_mission')) || 1;
+            if (this.currentMissionId >= currentUnlocked && this.currentMissionId < 6) {
+                localStorage.setItem('malvinas1982_unlocked_mission', this.currentMissionId + 1);
+            }
+        } catch (err) {
+            console.error("No se pudo guardar el progreso de campaña:", err);
+        }
+        
         this.stop();
         this.onVictory(this.score);
     }
@@ -2806,6 +3347,29 @@ class MalvinasGame {
                 ctx.textAlign = 'center';
                 ctx.font = 'bold 18px "Share Tech Mono", monospace';
                 ctx.fillText(`¡METRALLA DESATADA! ${Math.ceil(this.overdriveTimer / 1000)}s`, this.width / 2, this.height - 70);
+            }
+
+            // Draw active weapon timers
+            if (this.player.activeWeapon && this.player.activeWeapon !== 'standard' && this.player.weaponTimer > 0) {
+                const wNames = {
+                    'dual': 'AMETRALLADORAS DUALES',
+                    'spread': 'FUEGO EN ABANICO (3 VÍAS)',
+                    'side': 'COBERTURA FLANCOS',
+                    'rear': 'COBERTURA RETAGUARDIA'
+                };
+                const wName = wNames[this.player.activeWeapon] || 'ARMA MEJORADA';
+                ctx.fillStyle = '#ffde3b';
+                ctx.textAlign = 'center';
+                ctx.font = 'bold 11px "Share Tech Mono", monospace';
+                ctx.fillText(`${wName}: ${Math.ceil(this.player.weaponTimer / 1000)}s`, this.width / 2, this.height - 35);
+                
+                // Draw small golden blinking timeline countdown under it
+                ctx.strokeStyle = 'rgba(255, 222, 59, 0.4)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.width / 2 - 60, this.height - 26);
+                ctx.lineTo(this.width / 2 - 60 + 120 * (this.player.weaponTimer / 15000), this.height - 26);
+                ctx.stroke();
             }
         }
         

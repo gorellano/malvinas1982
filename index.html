@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     
     <!-- Core Styling -->
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
     <!-- Retro CRT Curved Bezel & Scanlines Layer -->
@@ -63,14 +63,85 @@
                 </div>
 
                 <div class="menu-actions">
-                    <button id="btn-start-mission" class="tactical-btn primary-btn">INICIAR MISIÓN</button>
+                    <button id="btn-start-mission" class="tactical-btn primary-btn">SELECCIONAR MISIÓN (CAMPAÑA)</button>
                     <button id="btn-view-scores" class="tactical-btn secondary-btn">PARTE DE BAJAS (TOP 10)</button>
+                </div>
+            </section>
+ 
+            <!-- 1.5. MISSION SELECTION SCREEN -->
+            <section id="screen-missions" class="screen-view hidden">
+                <h3 class="screen-title">MISIONES DE COMBATE</h3>
+                <p class="selection-subtitle">SELECCIONE LA OPERACIÓN HISTÓRICA A EJECUTAR</p>
+                
+                <div class="selection-layout">
+                    <!-- Left: Mission Cards Grid (Compact list) -->
+                    <div class="selection-left">
+                        <div class="planes-grid compact-grid" id="missions-grid-container">
+                            <!-- Mission nodes injected dynamically by JS -->
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Mission Radar & Tactical Briefing -->
+                    <div class="selection-right">
+                        <div class="blueprint-hangar glassmorphism">
+                            <div class="blueprint-console-header">
+                                <span class="blueprint-console-title">SISTEMA TÁCTICO // DETALLES DE OPERACIÓN</span>
+                                <span class="blueprint-console-status blinking-green">ESTADO: DETECTADO</span>
+                            </div>
+                            
+                            <!-- Tactical SVG Radar Map of Malvinas -->
+                            <div class="blueprint-canvas-wrapper" style="background-color: #02070a; height: 230px; display: flex; align-items: center; justify-content: center;">
+                                <svg id="tactical-map-svg" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%; max-height: 230px;">
+                                    <!-- Background radar grid -->
+                                    <circle cx="150" cy="100" r="90" fill="none" stroke="rgba(79, 230, 136, 0.08)" stroke-width="1"/>
+                                    <circle cx="150" cy="100" r="60" fill="none" stroke="rgba(79, 230, 136, 0.08)" stroke-width="1"/>
+                                    <circle cx="150" cy="100" r="30" fill="none" stroke="rgba(79, 230, 136, 0.08)" stroke-width="1"/>
+                                    <line x1="60" y1="100" x2="240" y2="100" stroke="rgba(79, 230, 136, 0.08)" stroke-width="1"/>
+                                    <line x1="150" y1="10" x2="150" y2="190" stroke="rgba(79, 230, 136, 0.08)" stroke-width="1"/>
+                                    
+                                    <!-- Stylized procedural outline of Malvinas Soledad & Gran Malvina -->
+                                    <!-- Isla Gran Malvina (Left) -->
+                                    <path d="M 85 70 Q 75 75 70 85 Q 65 95 72 105 Q 80 115 90 120 Q 98 125 105 115 Q 112 105 108 95 Q 105 85 98 75 Z" fill="rgba(79, 230, 136, 0.15)" stroke="rgba(79, 230, 136, 0.4)" stroke-width="1.5"/>
+                                    <!-- Isla Soledad (Right) -->
+                                    <path d="M 125 72 Q 135 65 145 62 Q 155 58 165 65 Q 175 72 185 85 Q 192 98 185 110 Q 175 120 162 125 Q 150 128 140 120 Q 132 110 135 98 Q 138 85 125 72 Z" fill="rgba(79, 230, 136, 0.15)" stroke="rgba(79, 230, 136, 0.4)" stroke-width="1.5"/>
+                                    
+                                    <!-- Strait indicator -->
+                                    <path d="M 116 70 Q 120 90 122 110" fill="none" stroke="rgba(79, 230, 136, 0.3)" stroke-width="1" stroke-dasharray="2,2"/>
+                                    
+                                    <!-- Sweeping radar sweep -->
+                                    <line id="radar-sweep-line" x1="150" y1="100" x2="230" y2="40" stroke="rgba(79, 230, 136, 0.3)" stroke-width="2"/>
+                                    
+                                    <!-- Target pointer blinker -->
+                                    <circle id="radar-target-indicator" cx="150" cy="100" r="6" fill="#ffde3b" stroke="#fff" stroke-width="1" style="display: none;"/>
+                                </svg>
+                            </div>
+                            
+                            <div class="blueprint-briefing-panel">
+                                <div class="briefing-header" id="mission-briefing-title">HISTORIAL DE OPERACIÓN</div>
+                                <div style="display: flex; flex-direction: column; gap: 4px; font-size: 11px; margin-bottom: 6px; color: var(--amber-tactical);">
+                                    <div><span style="opacity: 0.7;">FECHA:</span> <span id="mission-brief-date-val">-</span></div>
+                                    <div><span style="opacity: 0.7;">OBJETIVO:</span> <span id="mission-brief-objective-val">-</span></div>
+                                </div>
+                                <p id="mission-brief-desc-val" class="briefing-text">
+                                    Cargando detalles de misión...
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="selection-actions">
+                    <button id="btn-back-missions" class="tactical-btn secondary-btn">VOLVER</button>
+                    <button id="btn-continue-plane" class="tactical-btn primary-btn pulse-glow">PLANIFICAR VUELO</button>
                 </div>
             </section>
 
             <!-- 2. PLANE SELECTION SCREEN -->
             <section id="screen-selection" class="screen-view hidden">
                 <h3 class="screen-title">SELECCIÓN DE AERONAVE</h3>
+                <div class="active-mission-banner glassmorphism">
+                    OPERACIÓN TÁCTICA SELECCIONADA: <strong id="hangar-active-mission">-</strong>
+                </div>
                 <p class="selection-subtitle">ELIJA SU CAZA PARA LA INCURSIÓN</p>
                 
                 <div class="selection-layout">
@@ -293,9 +364,9 @@
     </div>
 
     <!-- Script imports -->
-    <script src="js/audio.js"></script>
-    <script src="js/leaderboard.js"></script>
-    <script src="js/game.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/audio.js?v=2"></script>
+    <script src="js/leaderboard.js?v=2"></script>
+    <script src="js/game.js?v=2"></script>
+    <script src="js/main.js?v=2"></script>
 </body>
 </html>
