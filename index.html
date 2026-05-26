@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>1982: Héroes de Malvinas - Retro Arcade</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇦🇷</text></svg>">
+    
+    <!-- Retro Console Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Retro CRT Curved Bezel & Scanlines Layer -->
+    <div class="crt-overlay"></div>
+    <div class="crt-scanlines"></div>
+    
+    <!-- Main App Container -->
+    <div class="app-container">
+        
+        <!-- App Header with controls -->
+        <header class="app-header">
+            <div class="military-status">
+                <span class="pulse-indicator"></span>
+                <span class="status-text">SISTEMAS OPERATIVOS // RADAR ACTIVADO</span>
+            </div>
+            <div class="header-controls">
+                <button id="btn-mute" class="tactical-btn mini-btn">🔊 AUDIO: ACTIVO</button>
+                <button id="btn-crt" class="tactical-btn mini-btn">📺 CRT: ACTIVADO</button>
+            </div>
+        </header>
+
+        <main class="app-body">
+            
+            <!-- 1. MAIN MENU SCREEN -->
+            <section id="screen-menu" class="screen-view">
+                <div class="logo-area">
+                    <h1 class="game-title">1982</h1>
+                    <h2 class="game-subtitle">HÉROES DE MALVINAS</h2>
+                    <div class="sub-border"></div>
+                </div>
+
+                <!-- Animated Radar Sweeping Graphic -->
+                <div class="radar-hud">
+                    <div class="radar-sweep"></div>
+                    <div class="radar-circle c1"></div>
+                    <div class="radar-circle c2"></div>
+                    <div class="radar-circle c3"></div>
+                    <div class="radar-blip p1"></div>
+                    <div class="radar-blip p2"></div>
+                    <div class="radar-crosshair-h"></div>
+                    <div class="radar-crosshair-v"></div>
+                </div>
+
+                <div class="menu-briefing">
+                    <p class="tactical-message">
+                        Homenaje arcade en honor a los valientes pilotos de la Fuerza Aérea y la Armada Argentina que combatieron en el Atlántico Sur. Pilota aeronaves históricas y enfrenta la flota británica en una simulación de combate vertical táctico.
+                    </p>
+                </div>
+
+                <div class="menu-actions">
+                    <button id="btn-start-mission" class="tactical-btn primary-btn">INICIAR MISIÓN</button>
+                    <button id="btn-view-scores" class="tactical-btn secondary-btn">PARTE DE BAJAS (TOP 10)</button>
+                </div>
+            </section>
+
+            <!-- 2. PLANE SELECTION SCREEN -->
+            <section id="screen-selection" class="screen-view hidden">
+                <h3 class="screen-title">SELECCIÓN DE AERONAVE</h3>
+                <p class="selection-subtitle">ELIJA SU CAZA PARA LA INCURSIÓN</p>
+                
+                <div class="selection-layout">
+                    <!-- Left Column: Compact aircraft card selections and difficulty options -->
+                    <div class="selection-left">
+                        <div class="planes-grid compact-grid">
+                            <!-- Skyhawk Card -->
+                            <div class="plane-card selected" data-index="0">
+                                <div class="card-glow"></div>
+                                <div class="plane-info">
+                                    <h4 class="plane-name">A-4B SKYHAWK</h4>
+                                    <p class="plane-role">FUERZA AÉREA ARGENTINA</p>
+                                </div>
+                                
+                                <div class="plane-stats">
+                                    <div class="stat-row">
+                                        <span>VELOCIDAD</span>
+                                        <div class="stat-bar"><div class="bar-fill" style="width: 70%;"></div></div>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>ARMADURA</span>
+                                        <div class="stat-bar"><div class="bar-fill" style="width: 65%;"></div></div>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>POTENCIA</span>
+                                        <div class="stat-bar"><div class="bar-fill" style="width: 80%;"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Super Étendard Card -->
+                            <div class="plane-card" data-index="1">
+                                <div class="card-glow"></div>
+                                <div class="plane-info">
+                                    <h4 class="plane-name">SUPER ÉTENDARD</h4>
+                                    <p class="plane-role">ARMADA ARGENTINA</p>
+                                </div>
+                                
+                                <div class="plane-stats">
+                                    <div class="stat-row">
+                                        <span>VELOCIDAD</span>
+                                        <div class="stat-bar"><div class="bar-fill" style="width: 85%;"></div></div>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>ARMADURA</span>
+                                        <div class="stat-bar"><div class="bar-fill" style="width: 50%;"></div></div>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>POTENCIA</span>
+                                        <div class="stat-bar"><div class="bar-fill" style="width: 95%;"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pucará Card -->
+                            <div class="plane-card" data-index="2">
+                                <div class="card-glow"></div>
+                                <div class="plane-info">
+                                    <h4 class="plane-name">IA-58 PUCARÁ</h4>
+                                    <p class="plane-role">FABRICACIÓN NACIONAL</p>
+                                </div>
+                                
+                                <div class="plane-stats">
+                                    <div class="stat-row">
+                                        <span>VELOCIDAD</span>
+                                        <div class="stat-bar"><div class="bar-fill" style="width: 55%;"></div></div>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>ARMADURA</span>
+                                        <div class="stat-bar"><div class="bar-fill" style="width: 90%;"></div></div>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>POTENCIA</span>
+                                        <div class="stat-bar"><div class="bar-fill" style="width: 60%;"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="difficulty-selection-container">
+                            <span class="difficulty-title">DIFICULTAD DE LA SIMULACIÓN:</span>
+                            <div class="difficulty-radio-group">
+                                <label class="difficulty-option">
+                                    <input type="radio" name="difficulty-level" value="easy">
+                                    FÁCIL
+                                </label>
+                                <label class="difficulty-option active-option">
+                                    <input type="radio" name="difficulty-level" value="normal" checked>
+                                    NORMAL
+                                </label>
+                                <label class="difficulty-option">
+                                    <input type="radio" name="difficulty-level" value="hard">
+                                    DIFÍCIL
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Interactive Tactical Blueprint Hangar console -->
+                    <div class="selection-right">
+                        <div id="blueprint-hangar" class="blueprint-hangar glassmorphism">
+                            <div class="blueprint-console-header">
+                                <span class="blueprint-console-title">MONITOR TÁCTICO // PLANO DE LA AERONAVE</span>
+                                <span class="blueprint-console-status blinking-green">ESCANEO COMPLETO</span>
+                            </div>
+                            <div class="blueprint-canvas-wrapper">
+                                <canvas id="blueprint-canvas" width="460" height="230"></canvas>
+                            </div>
+                            <div class="blueprint-briefing-panel">
+                                <div class="briefing-header">BITÁCORA HISTÓRICA - MALVINAS 1982</div>
+                                <p id="blueprint-history-text" class="briefing-text">
+                                    Cargando datos históricos del caza...
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="selection-actions">
+                    <button id="btn-back-menu" class="tactical-btn secondary-btn">VOLVER</button>
+                    <button id="btn-launch" class="tactical-btn primary-btn pulse-glow">¡DESPEGAR!</button>
+                </div>
+            </section>
+
+            <!-- 3. GAMEPLAY SCREEN -->
+            <section id="screen-game" class="screen-view hidden">
+                <div class="canvas-wrapper">
+                    <canvas id="game-canvas"></canvas>
+                </div>
+                <div class="game-controls-helper">
+                    <span>Mover: <strong>[A/D]</strong> o <strong>[◀/▶]</strong></span>
+                    <span>Disparo: <strong>[ESPACIO]</strong></span>
+                    <span>Especial: <strong>[E]</strong> o <strong>[SHIFT]</strong></span>
+                </div>
+            </section>
+
+            <!-- 4. GAME OVER SCREEN -->
+            <section id="screen-gameover" class="screen-view hidden">
+                <h2 class="gameover-title flashing-red">AERONAVE DERRIBADA</h2>
+                <div class="military-divider red-divider"></div>
+                
+                <div class="result-details">
+                    <p>HAS CAÍDO EN COMBATE DEFENDIENDO LA SOBERANÍA NACIONAL</p>
+                    <div class="score-display">PUNTOS OBTENIDOS: <span id="final-score-gameover" class="glow-value">0</span></div>
+                </div>
+
+                <!-- Submission form if qualifies for leaderboard -->
+                <div id="record-form-gameover-container" class="record-form-section hidden">
+                    <p class="form-instruction">¡FELICITACIONES! HICISTE HISTORIA. INGRESA TU NOMBRE PILOTO:</p>
+                    <form id="form-gameover-record" class="tactical-form">
+                        <input type="text" id="pilot-name-gameover" placeholder="NOM. PILOTO" maxlength="15" required autocomplete="off">
+                        <button type="submit" class="tactical-btn primary-btn mini-btn">REGISTRAR RANGO</button>
+                    </form>
+                </div>
+
+                <div class="result-actions">
+                    <button class="tactical-btn primary-btn btn-retry">REINTENTAR</button>
+                    <button class="tactical-btn secondary-btn btn-home">MENÚ PRINCIPAL</button>
+                </div>
+            </section>
+
+            <!-- 5. VICTORY SCREEN -->
+            <section id="screen-victory" class="screen-view hidden">
+                <h2 class="victory-title flashing-green">MISIÓN COMPLETADA</h2>
+                <div class="military-divider green-divider"></div>
+                
+                <div class="result-details">
+                    <p class="victory-hero-text">
+                        ¡GLORIA A LOS HÉROES! HAS HUNDIDO EL HMS INVINCIBLE Y CUMPLIDO LA INCURSIÓN TÁCTICA CON ÉXITO ROTUNDO.
+                    </p>
+                    <div class="score-display">PUNTOS OBTENIDOS: <span id="final-score-victory" class="glow-value">0</span></div>
+                </div>
+
+                <!-- Submission form if qualifies for leaderboard -->
+                <div id="record-form-victory-container" class="record-form-section hidden">
+                    <p class="form-instruction">TU NOMBRE QUEDARÁ GRABADO EN LA HISTORIA. INGRESA TUS INICIALES/NOMBRE:</p>
+                    <form id="form-victory-record" class="tactical-form">
+                        <input type="text" id="pilot-name-victory" placeholder="NOM. PILOTO" maxlength="15" required autocomplete="off">
+                        <button type="submit" class="tactical-btn primary-btn mini-btn">REGISTRAR EN PARTE</button>
+                    </form>
+                </div>
+
+                <div class="result-actions">
+                    <button class="tactical-btn primary-btn btn-retry">VOLVER A JUGAR</button>
+                    <button class="tactical-btn secondary-btn btn-home">MENÚ PRINCIPAL</button>
+                </div>
+            </section>
+            
+        </main>
+        
+        <!-- 6. HIGH SCORES MODAL OVERLAY -->
+        <div id="high-scores-modal" class="modal-overlay hidden">
+            <div class="modal-content glassmorphism">
+                <h3 class="modal-title">HISTORIAL DE COMBATE (TOP 10)</h3>
+                <div class="table-wrapper">
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>RANGO</th>
+                                <th>PILOTO</th>
+                                <th>PUNTAJE</th>
+                                <th>AERONAVE</th>
+                                <th>DIFICULTAD</th>
+                                <th>FECHA</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scores-table-body">
+                            <!-- High scores entries injected here -->
+                        </tbody>
+                    </table>
+                </div>
+                <button id="btn-close-scores" class="tactical-btn secondary-btn">CERRAR ARCHIVO</button>
+            </div>
+        </div>
+
+        <footer class="app-footer">
+            <span>LAS MALVINAS SON Y SERÁN ARGENTINAS // SIMULACIÓN MILITAR ARCADE</span>
+        </footer>
+        
+    </div>
+
+    <!-- Script imports -->
+    <script src="js/audio.js"></script>
+    <script src="js/leaderboard.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
