@@ -40,6 +40,10 @@ Los viejos bloques planos de colores fueron reemplazados por modelos vectoriales
 *   **HMS Invincible (Jefe Misión 6):** Portaaviones insignia británico que despliega ráfagas concéntricas de balas y cazas Harriers de escolta.
 *   **HMS Sheffield (Miniboss Misión 3 y 4):** Destructor Clase 42 que lanza misiles térmicos guiados (*homing*) destructibles por el jugador.
 
+### 🔫 Intercepción de Proyectiles Enemigos (Estilo *1942*)
+*   **Bala vs. Bala:** Tus ametralladoras pueden **interceptar y destruir** los disparos enemigos en pleno vuelo, tal como sucede en el arcade clásico *1942*. Si un proyectil tuyo colisiona con una bala enemiga en trayectoria de vuelo, ambas se neutralizan mutuamente generando una pequeña explosión de chispas naranja en el punto de impacto.
+*   **Táctica Defensiva:** Esta mecánica transforma cada disparo en una decisión táctica: disparar en modo evasión para limpiar el campo de proyectiles, o maniobrar hacia los enemigos. Los misiles guiados del HMS Sheffield **también son interceptables** mediante fuego sostenido de ametralladora.
+
 ### ⏱️ Pacing de Combate Clásico
 *   **Calibración de Distancia:** Fiel al ritmo y la tensión de las cabinas de arcade clásicas, la velocidad de progresión de la distancia de las misiones fue ajustada a **25 unidades/segundo**, logrando niveles inmersivos de **2 a 4.6 minutos** de duración de combate continuo antes del arribo del jefe de zona.
 *   **Wingman Inteligente:** El caza wingman aliado en la etapa de acantilados costeros ahora aparece de forma dinámica al completarse el **70% de la distancia de la misión**, garantizando soporte estratégico previo al jefe final.

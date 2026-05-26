@@ -3018,9 +3018,40 @@ class MalvinasGame {
                 }
             });
         });
+
+        // 1.5. Player Bullets hitting Enemy Bullets (destroying them like in 1942)
+        this.bullets.forEach(b => {
+            if (b.y <= -100) return; // already destroyed
+            
+            this.enemyBullets.forEach(eb => {
+                if (eb.y >= 9999) return; // already destroyed
+                
+                const dist = Math.hypot(b.x - eb.x, b.y - eb.y);
+                const collDist = (eb.size || 5) + 6; 
+                if (dist < collDist) {
+                    b.y = -999;
+                    eb.y = 9999;
+                    
+                    // Cute tiny spark particles for bullet collision
+                    for (let i = 0; i < 3; i++) {
+                        this.particles.push({
+                            x: eb.x,
+                            y: eb.y,
+                            vx: (Math.random() - 0.5) * 80,
+                            vy: (Math.random() - 0.5) * 80,
+                            r: 1.0 + Math.random() * 1.5,
+                            life: 0.15,
+                            maxLife: 0.15,
+                            color: '#ff9421' // bright orange sparks
+                        });
+                    }
+                }
+            });
+        });
         
-        // Clean processed bullets
+        // Clean processed bullets and enemy bullets immediately
         this.bullets = this.bullets.filter(b => b.y > -100);
+        this.enemyBullets = this.enemyBullets.filter(eb => eb.y < 9999);
 
         // 2. Enemy Bullets hitting Player (only if not invulnerable)
         if (this.player.invulnerable <= 0) {
