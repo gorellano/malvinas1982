@@ -271,16 +271,25 @@
                 <div class="canvas-wrapper">
                     <canvas id="game-canvas"></canvas>
 
-                    <!-- Mobile Touch Controls Overlay (shown only on touch devices) -->
+                    <!-- Mobile Touch Controls: position:fixed, outside overflow:hidden scope -->
                     <div id="touch-controls" class="hidden">
+                        <!-- Joystick (left) -->
                         <div id="touch-joystick-zone">
                             <div id="joystick-pad">
                                 <div id="joystick-knob"></div>
                             </div>
+                            <span class="joystick-label">MOVER</span>
                         </div>
+                        <!-- Action Buttons (right) -->
                         <div id="touch-buttons-zone">
-                            <button id="touch-special-btn" title="Arma Especial">⚡</button>
-                            <button id="touch-fire-btn" title="Disparar">🔥</button>
+                            <div class="touch-btn-wrap">
+                                <button id="touch-special-btn" title="Arma Especial">⚡</button>
+                                <span class="touch-btn-label">ESPECIAL</span>
+                            </div>
+                            <div class="touch-btn-wrap">
+                                <button id="touch-fire-btn" title="Disparar">🔥</button>
+                                <span class="touch-btn-label">FUEGO</span>
+                            </div>
                         </div>
                     </div>
                 </div>
