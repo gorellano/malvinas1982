@@ -180,6 +180,125 @@ class MalvinasGame {
         window.addEventListener('keyup', (e) => {
             this.keys[e.code] = false;
         });
+
+        // ── Mobile Touch Controls ──────────────────────────────────
+        this.isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        if (this.isMobile) {
+            this._initTouchControls();
+        }
+    }
+
+    _initTouchControls() {
+        const touchControlsEl = document.getElementById('touch-controls');
+        const joystickZone    = document.getElementById('touch-joystick-zone');
+        const joystickKnob    = document.getElementById('joystick-knob');
+        const joystickPad     = document.getElementById('joystick-pad');
+        const fireBtn         = document.getElementById('touch-fire-btn');
+        const specialBtn      = document.getElementById('touch-special-btn');
+
+        if (!touchControlsEl || !joystickZone) return;
+
+        // Show the touch controls overlay when game starts
+        // (called externally via showTouchControls / hideTouchControls)
+        this._touchControlsEl = touchControlsEl;
+
+        const JOYSTICK_RADIUS = 42; // max knob displacement in px
+
+        // Track the active joystick touch id
+        let joystickTouchId = null;
+        let originX = 0;
+        let originY = 0;
+
+        const releaseJoystick = () => {
+            joystickTouchId = null;
+            // Release all directional virtual keys
+            this.keys['ArrowUp']    = false;
+            this.keys['ArrowDown']  = false;
+            this.keys['ArrowLeft']  = false;
+            this.keys['ArrowRight'] = false;
+            // Reset knob to center
+            joystickKnob.style.transform = 'translate(-50%, -50%)';
+        };
+
+        joystickZone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (joystickTouchId !== null) return;
+            const touch = e.changedTouches[0];
+            joystickTouchId = touch.identifier;
+            // Origin is the center of the joystick pad
+            const rect = joystickPad.getBoundingClientRect();
+            originX = rect.left + rect.width  / 2;
+            originY = rect.top  + rect.height / 2;
+        }, { passive: false });
+
+        joystickZone.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (const touch of e.changedTouches) {
+                if (touch.identifier !== joystickTouchId) continue;
+
+                const dx = touch.clientX - originX;
+                const dy = touch.clientY - originY;
+                const dist = Math.hypot(dx, dy);
+
+                // Clamp knob position to pad radius
+                const clampedDist = Math.min(dist, JOYSTICK_RADIUS);
+                const angle = Math.atan2(dy, dx);
+                const knobX = Math.cos(angle) * clampedDist;
+                const knobY = Math.sin(angle) * clampedDist;
+
+                joystickKnob.style.transform =
+                    `translate(calc(-50% + ${knobX}px), calc(-50% + ${knobY}px))`;
+
+                // Translate to virtual arrow keys with a dead-zone of 12px
+                const DEAD = 12;
+                this.keys['ArrowUp']    = dy < -DEAD;
+                this.keys['ArrowDown']  = dy >  DEAD;
+                this.keys['ArrowLeft']  = dx < -DEAD;
+                this.keys['ArrowRight'] = dx >  DEAD;
+            }
+        }, { passive: false });
+
+        joystickZone.addEventListener('touchend',    (e) => { e.preventDefault(); for (const t of e.changedTouches) { if (t.identifier === joystickTouchId) releaseJoystick(); } }, { passive: false });
+        joystickZone.addEventListener('touchcancel', (e) => { e.preventDefault(); releaseJoystick(); }, { passive: false });
+
+        // ── Fire button ─────────────────────────────────────────────
+        fireBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.keys['Space'] = true;
+        }, { passive: false });
+        fireBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.keys['Space'] = false;
+        }, { passive: false });
+        fireBtn.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            this.keys['Space'] = false;
+        }, { passive: false });
+
+        // ── Special weapon button ────────────────────────────────────
+        specialBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            // Simulate holding Shift to trigger special
+            this.keys['ShiftLeft'] = true;
+        }, { passive: false });
+        specialBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.keys['ShiftLeft'] = false;
+        }, { passive: false });
+    }
+
+    showTouchControls() {
+        if (this._touchControlsEl) this._touchControlsEl.classList.remove('hidden');
+    }
+
+    hideTouchControls() {
+        if (this._touchControlsEl) {
+            this._touchControlsEl.classList.add('hidden');
+            // Release all virtual keys when hiding controls
+            ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft'].forEach(k => {
+                this.keys[k] = false;
+            });
+        }
     }
 
     resize() {

@@ -633,12 +633,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         gameInstance.resize();
         gameInstance.start(chosenPlaneIndex, selectedDifficulty, selectedMissionId);
+
+        // Show virtual joystick on touch devices
+        if (gameInstance.isMobile) gameInstance.showTouchControls();
     });
 
     // 7. Game State Callbacks
     function onGameOver(score) {
         pendingHighScore = score;
         finalScoreGameOver.innerText = score.toLocaleString();
+
+        // Hide touch controls when game ends
+        if (gameInstance && gameInstance.isMobile) gameInstance.hideTouchControls();
         
         // Check if score qualifies for record input
         const recordFormSection = document.getElementById('record-form-gameover-container');
@@ -654,6 +660,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function onVictory(score) {
         pendingHighScore = score;
         finalScoreVictory.innerText = score.toLocaleString();
+
+        // Hide touch controls on victory
+        if (gameInstance && gameInstance.isMobile) gameInstance.hideTouchControls();
         
         const recordFormSection = document.getElementById('record-form-victory-container');
         if (leaderboard.qualifies(score)) {

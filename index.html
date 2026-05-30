@@ -270,6 +270,19 @@
             <section id="screen-game" class="screen-view hidden">
                 <div class="canvas-wrapper">
                     <canvas id="game-canvas"></canvas>
+
+                    <!-- Mobile Touch Controls Overlay (shown only on touch devices) -->
+                    <div id="touch-controls" class="hidden">
+                        <div id="touch-joystick-zone">
+                            <div id="joystick-pad">
+                                <div id="joystick-knob"></div>
+                            </div>
+                        </div>
+                        <div id="touch-buttons-zone">
+                            <button id="touch-special-btn" title="Arma Especial">⚡</button>
+                            <button id="touch-fire-btn" title="Disparar">🔥</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="game-controls-helper">
                     <span>Mover: <strong>[A/D]</strong> o <strong>[◀/▶]</strong></span>
