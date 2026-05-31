@@ -306,19 +306,26 @@ class MalvinasGame {
         const width = parent.clientWidth;
         const height = parent.clientHeight;
         
-        // Maintain vertical retro aspect ratio (3:4 or similar)
         let gameWidth = width;
-        let gameHeight = width * (4 / 3);
-        
-        if (gameHeight > height) {
-            gameHeight = height;
-            gameWidth = height * (3 / 4);
+        let gameHeight = height;
+
+        // If the screen is too wide (like desktop landscape), cap the width 
+        // to keep a vertical shooter feel (max width = 85% of height).
+        if (gameWidth > gameHeight * 0.85) {
+            gameWidth = gameHeight * 0.85;
         }
         
         this.canvas.width = gameWidth;
         this.canvas.height = gameHeight;
         
+        // Base logical width is always 600
+        this.width = 600;
         this.scale = gameWidth / this.width;
+        
+        // Calculate logical height dynamically based on the scale.
+        // This allows mobile (tall screens) to see more vertically without black bars!
+        this.height = gameHeight / this.scale;
+        
         this.ctx.imageSmoothingEnabled = false;
     }
 
