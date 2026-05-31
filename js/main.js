@@ -57,7 +57,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCRT = document.getElementById('btn-crt');
     const btnViewScores = document.getElementById('btn-view-scores');
     const btnCloseScores = document.getElementById('btn-close-scores');
+    const btnCredits = document.getElementById('btn-credits');
+    const btnBackFromCredits = document.getElementById('btn-back-from-credits');
     
+    // Screens
+    const screenCredits = document.getElementById('screen-credits');
+
     // Score lists & Overlays
     const highScoresModal = document.getElementById('high-scores-modal');
     const scoresTableBody = document.getElementById('scores-table-body');
@@ -607,6 +612,46 @@ document.addEventListener('DOMContentLoaded', () => {
     btnCloseScores.addEventListener('click', () => {
         playClickSound();
         highScoresModal.classList.add('hidden');
+    });
+
+    // Credits Screen toggle & dynamic load
+    let creditsLoaded = false;
+    btnCredits.addEventListener('click', () => {
+        playClickSound();
+        showScreen(screenCredits);
+        
+        if (!creditsLoaded) {
+            const caidosList = document.getElementById('caidos-list');
+            fetch('data/caidos.json')
+                .then(res => res.json())
+                .then(names => {
+                    caidosList.innerHTML = '';
+                    names.forEach(name => {
+                        const li = document.createElement('li');
+                        li.textContent = name;
+                        caidosList.appendChild(li);
+                    });
+                    
+                    // Add generic entry for the rest since Wikipedia scraping might not be exhaustive
+                    if (names.length < 649) {
+                        const liExtra = document.createElement('li');
+                        liExtra.className = 'caidos-extra';
+                        liExtra.textContent = `...y los restantes valientes hasta completar la nómina de los 649 héroes.`;
+                        caidosList.appendChild(liExtra);
+                    }
+                    
+                    creditsLoaded = true;
+                })
+                .catch(err => {
+                    caidosList.innerHTML = '<li class="caidos-error">Error al recuperar la nómina. Honor a los 649 caídos.</li>';
+                    console.error('Error fetching caidos:', err);
+                });
+        }
+    });
+    
+    btnBackFromCredits.addEventListener('click', () => {
+        playClickSound();
+        showScreen(screenMenu);
     });
 
     // 6. Launch the Game Misión

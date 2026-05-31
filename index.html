@@ -65,6 +65,7 @@
                 <div class="menu-actions">
                     <button id="btn-start-mission" class="tactical-btn primary-btn">SELECCIONAR MISIÓN (CAMPAÑA)</button>
                     <button id="btn-view-scores" class="tactical-btn secondary-btn">PARTE DE BAJAS (TOP 10)</button>
+                    <button id="btn-credits" class="tactical-btn">CRÉDITOS / HOMENAJE</button>
                 </div>
             </section>
  
@@ -349,6 +350,23 @@
                 <div class="result-actions">
                     <button class="tactical-btn primary-btn btn-retry">VOLVER A JUGAR</button>
                     <button class="tactical-btn secondary-btn btn-home">MENÚ PRINCIPAL</button>
+                </div>
+            </section>
+            <!-- 5. CREDITS / TRIBUTE SCREEN -->
+            <section id="screen-credits" class="screen-view hidden">
+                <h3 class="screen-title">HONOR Y GLORIA</h3>
+                <div class="tribute-message">
+                    <p>En agradecimiento a todos los que combatieron y dieron todo y más por la Patria.</p>
+                    <p>649 HÉROES CAÍDOS EN COMBATE</p>
+                </div>
+                <div id="caidos-list-container" class="glassmorphism caidos-container">
+                    <ul id="caidos-list" class="caidos-list">
+                        <!-- Loaded dynamically -->
+                        <li class="caidos-loading">RECUPERANDO ARCHIVOS...</li>
+                    </ul>
+                </div>
+                <div class="menu-actions" style="margin-top: 20px;">
+                    <button id="btn-back-from-credits" class="tactical-btn secondary-btn">VOLVER AL MENÚ</button>
                 </div>
             </section>
             

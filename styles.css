@@ -1017,8 +1017,8 @@ body.crt-disabled .crt-scanlines {
     /* Dark military gradient so controls are readable over any background */
     background: linear-gradient(
         to top,
-        rgba(0, 5, 10, 0.75) 0%,
-        rgba(0, 5, 10, 0.35) 60%,
+        rgba(0, 5, 10, 0.45) 0%,
+        rgba(0, 5, 10, 0.15) 60%,
         transparent 100%
     );
 }
@@ -1038,21 +1038,21 @@ body.crt-disabled .crt-scanlines {
 }
 
 #joystick-pad {
-    width: 120px;
-    height: 120px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     /* Tactical ring — mostly transparent so game is visible */
     background: radial-gradient(
         circle at center,
-        rgba(0, 8, 5, 0.55) 0%,
-        rgba(0, 20, 12, 0.40) 60%,
-        rgba(79, 230, 136, 0.04) 100%
+        rgba(0, 8, 5, 0.25) 0%,
+        rgba(0, 20, 12, 0.15) 60%,
+        rgba(79, 230, 136, 0.02) 100%
     );
-    border: 2px solid rgba(79, 230, 136, 0.45);
+    border: 2px solid rgba(79, 230, 136, 0.25);
     box-shadow:
-        0 0 0 1px rgba(79, 230, 136, 0.12),
-        0 0 20px rgba(79, 230, 136, 0.10),
-        inset 0 0 30px rgba(0, 0, 0, 0.55);
+        0 0 0 1px rgba(79, 230, 136, 0.05),
+        0 0 15px rgba(79, 230, 136, 0.05),
+        inset 0 0 20px rgba(0, 0, 0, 0.35);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1139,14 +1139,14 @@ body.crt-disabled .crt-scanlines {
 }
 
 #touch-fire-btn {
-    width: 84px;
-    height: 84px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     background: radial-gradient(circle at 38% 32%,
-        rgba(255, 110, 50, 1),
-        rgba(180, 30, 10, 0.92)
+        rgba(255, 110, 50, 0.75),
+        rgba(180, 30, 10, 0.55)
     );
-    border: 3px solid rgba(255, 120, 60, 0.75);
+    border: 2px solid rgba(255, 120, 60, 0.55);
     box-shadow:
         0 0 24px rgba(255, 80, 20, 0.55),
         0 0 8px rgba(255, 80, 20, 0.35),
@@ -1170,14 +1170,14 @@ body.crt-disabled .crt-scanlines {
 }
 
 #touch-special-btn {
-    width: 54px;
-    height: 54px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     background: radial-gradient(circle at 38% 32%,
-        rgba(255, 215, 80, 1),
-        rgba(140, 90, 5, 0.92)
+        rgba(255, 215, 80, 0.8),
+        rgba(140, 90, 5, 0.6)
     );
-    border: 2px solid rgba(230, 190, 79, 0.75);
+    border: 2px solid rgba(230, 190, 79, 0.5);
     box-shadow:
         0 0 16px rgba(230, 190, 79, 0.45),
         inset 0 1px 0 rgba(255, 240, 180, 0.2);
@@ -1506,4 +1506,104 @@ body.crt-disabled .crt-scanlines {
 }
 .table-wrapper::-webkit-scrollbar-thumb:hover {
     background: var(--green-tactical);
+}
+
+
+/* ============================================================
+   CREDITS / TRIBUTE SCREEN
+   ============================================================ */
+.tribute-message {
+    text-align: center;
+    color: var(--crt-green);
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    text-shadow: var(--text-glow);
+}
+
+.tribute-message p {
+    margin: 5px 0;
+}
+
+.tribute-message p:last-child {
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+}
+
+.caidos-container {
+    width: 100%;
+    max-width: 600px;
+    height: 350px;
+    overflow-y: auto;
+    padding: 20px;
+    margin: 0 auto;
+    border: 1px solid rgba(79, 230, 136, 0.3);
+    border-radius: 4px;
+}
+
+/* Custom Scrollbar for caidos list */
+.caidos-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.caidos-container::-webkit-scrollbar-track {
+    background: rgba(0, 20, 10, 0.8);
+    border-left: 1px solid rgba(79, 230, 136, 0.2);
+}
+
+.caidos-container::-webkit-scrollbar-thumb {
+    background: rgba(79, 230, 136, 0.5);
+    border-radius: 4px;
+}
+
+.caidos-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(79, 230, 136, 0.8);
+}
+
+.caidos-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    column-count: 2; /* Show names in two columns */
+    column-gap: 20px;
+}
+
+@media (max-width: 600px) {
+    .caidos-list {
+        column-count: 1; /* Single column on mobile */
+    }
+}
+
+.caidos-list li {
+    font-family: var(--font-mono);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 13px;
+    padding: 4px 0;
+    border-bottom: 1px dashed rgba(79, 230, 136, 0.15);
+    text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+.caidos-list li.caidos-loading,
+.caidos-list li.caidos-error {
+    column-span: all;
+    text-align: center;
+    color: var(--crt-green);
+    font-size: 16px;
+    padding: 20px;
+    border: none;
+}
+
+.caidos-list li.caidos-error {
+    color: #ff4a4a;
+}
+
+.caidos-list li.caidos-extra {
+    color: var(--crt-green);
+    text-align: center;
+    margin-top: 15px;
+    border: none;
+    column-span: all;
 }
